@@ -1,0 +1,127 @@
+#!/bin/sh
+# shellcheck disable=SC2016 #Expressions in single quotes
+
+# Declare vars
+SCRIPTNAME="$(echo "$0" | rev | cut -d/ -f1 | rev)"
+
+# Declare functions
+help() {
+	cat <<EOF
+Usage: $SCRIPTNAME [options]
+Options:
+	-h	Print this help message.
+
+	-x	Copies the image to the clipboard after capture. (Requires xclip)
+
+	-d	Use custom date format for saved image name. Defaults to %Y-%m-%d_%T.
+		Refer to date(1) for date format syntax.
+
+	-b	Verboses a PC speaker beep upon screenshot.
+		Beep tone determined by failure or success. (Requires beep)
+
+	-o	Set the output location for the screenshot. Defaults to CWD.
+
+	-n	Display notification on completion of screenshot. (Requires libnotify)
+
+	-s	Allows the user to select a region to screenshot then saves it to OUTPUT.
+		This option is the default action of $SCRIPTNAME
+		Mutually exclusive with -c.
+
+	-c	Screenshots the current window and saves it to OUTPUT. (Requires xdotool)
+		Mutually exclusive with -s.
+Examples:
+	$SCRIPTNAME -o ~/images/screenshots
+		This would give the user a selection tool and save the screenshot to '~/images/screenshots'
+
+	$SCRIPTNAME -cxo ~/images/screenshots
+		Capture the current window, copy it into the clipboard and save the screenshot to '~/images/screenshots'
+
+	$SCRIPTNAME -cxbno ~/images/screenshots
+		Same as the above except with a notification and PC speaker beep on completion.
+EOF
+	exit "$1"
+}
+
+stderr() {
+	printf "\033[1;31m%s\033[0m\n" "$1" >&2
+}
+
+try() {
+	eval "$@" >/dev/null 2>&1 || true
+}
+
+checkInstalled() {
+	command -v "$1" >/dev/null 2>&1 || {
+		stderr "the $1 utility must be installed to use ${2:-the -${ARGS} flag}!"
+		exit 1
+	}
+}
+
+# Check if maim is installed
+checkInstalled "maim" "$SCRIPTNAME"
+
+## Parse args
+while getopts 'hbxo:d:ncs' ARGS; do case $ARGS in
+	h)
+		help 0
+	;;
+	b)
+		checkInstalled beep
+		BEEP='beep'
+	;;
+	x)
+		checkInstalled xclip
+		CLIPBOARD='xclip -selection clipboard -t image/png -i "$FILENAME"'
+	;;
+	o)
+		# Check if output dir is viable
+		if [ ! -e "$OPTARG" ]; then
+			stderr 'The output location does not exist!'
+			help 1
+		elif [ ! -w "$OPTARG" ]; then
+			stderr 'The output location is not writable!'
+			help 1
+		fi
+		OUTPUT="$OPTARG"
+	;;
+	d)
+		DATEFORMAT="$OPTARG"
+	;;
+	n)
+		NOTIFICATION="notify-send -t 5000"
+	;;
+	c)
+		[ -n "$COMMAND" ] && {
+			stderr 'You cannot use both the -c and -s arguments.'
+			help 1
+		}
+		checkInstalled xdotool
+		COMMAND='-i $(xdotool getactivewindow)'
+	;;
+	s)
+		[ -n "$COMMAND" ] && {
+			stderr 'You cannot use both the -c and -s arguments.'
+			help 1
+		}
+		COMMAND='-s'
+	;;
+	\?)
+		help 1
+	;;
+esac; done
+
+# Set vars
+OUTPUT="${OUTPUT:-.}"
+FILENAME="$(realpath "${OUTPUT}/$(date "${DATEFORMAT:-+%Y-%m-%d_%T}").png")"
+
+# main (Its so small!!)
+if eval maim -qouBm 4 -d 0.1 "${COMMAND:-"-s"}" "$FILENAME"; then
+	try "$BEEP -f 1000 -n -f 750" &
+	try "$CLIPBOARD"
+	echo "$FILENAME"
+	try "$NOTIFICATION" "Screenshot\ saved\ to:\ $FILENAME"
+else
+	try "$BEEP -f 500 -n -f 250" &
+	echo "Screenshot canceled"
+	try "$NOTIFICATION" "Screenshot\ canceled"
+fi
