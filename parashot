@@ -2,7 +2,7 @@
 # shellcheck disable=SC2016 #Expressions in single quotes
 
 # Declare vars
-SCRIPTNAME="$(echo "$0" | rev | cut -d/ -f1 | rev)"
+SCRIPTNAME="${0##*/}"
 
 # Declare functions
 help() {
@@ -111,11 +111,11 @@ while getopts 'hbxo:d:ncs' ARGS; do case $ARGS in
 esac; done
 
 # Set vars
-OUTPUT="${OUTPUT:-.}"
-FILENAME="$(realpath "${OUTPUT}/$(date "${DATEFORMAT:-+%Y-%m-%d_%T}").png")"
+FILENAME="$(realpath "${OUTPUT:-.}/$(date "${DATEFORMAT:-+%Y-%m-%d_%T}").png")"
 
 # main (Its so small!!)
 if eval maim -qouBm 4 -d 0.1 "${COMMAND:-"-s"}" "$FILENAME"; then
+#if false; then
 	try "$BEEP -f 1000 -n -f 750" &
 	try "$CLIPBOARD"
 	echo "$FILENAME"
