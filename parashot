@@ -1,5 +1,6 @@
 #!/bin/sh
 # shellcheck disable=SC2016 #Expressions in single quotes
+# shellcheck disable=SC2155 #Declare and assign at same time is fine
 
 # Declare vars
 SCRIPTNAME="${0##*/}"
