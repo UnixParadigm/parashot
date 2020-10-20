@@ -11,7 +11,7 @@ help() {
 	cat <<EOF
 $SCRIPTNAME $VERSION
 
-Usage: $SCRIPTNAME [Options]
+Usage: $SCRIPTNAME [OPTION]
 
 Options:
 	-h		Print this help message.
@@ -28,9 +28,8 @@ Options:
 
 	-n		Display notification on completion of screenshot. (Requires libnotify)
 
-
 	-c		Screenshots the current window and saves it to OUTPUT. (Requires xdotool)
-			Mutually exclusive with -s.
+
 Examples:
 	$SCRIPTNAME
 		This would give the user a selection tool and save the screenshot to the current working directory.
