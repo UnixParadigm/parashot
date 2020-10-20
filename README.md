@@ -5,7 +5,7 @@
 ```
 parashot 1.1.0
 
-Usage: parashot [Options]
+Usage: parashot [OPTION]
 
 Options:
 	-h		Print this help message.
@@ -22,9 +22,8 @@ Options:
 
 	-n		Display notification on completion of screenshot. (Requires libnotify)
 
-
 	-c		Screenshots the current window and saves it to OUTPUT. (Requires xdotool)
-			Mutually exclusive with -s.
+
 Examples:
 	parashot
 		This would give the user a selection tool and save the screenshot to the current working directory.
